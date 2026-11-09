@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>버스 도착 정보 불러오기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f6f3ec; --grid:rgba(61,107,94,.09); --panel:#fff; --ink:#1b2420; --muted:#5b6b65; --line:#d9d6cc;
+  --tile:#f5efe4; --accent:#3d6b5e; --accent-soft:#dde9e5; --salmon:#eb9a8c; --salmon-soft:#f8d9d2; --salmon-ink:#b8483a;
+  --good:#17724a; --good-soft:#e3f2ea; --bad:#b42318; --bad-soft:#fdeceb; --warn-soft:#fff3d6;
+  --sans:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(14px,.75vw + .5vh,20px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;min-height:100vh;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+code{font-family:var(--mono);font-size:.88em;background:var(--accent-soft);padding:.05em .35em;border-radius:6px}
+.wrap{max-width:980px;margin:0 auto;padding:1.2rem 1.2rem 5rem;display:flex;flex-direction:column;gap:1rem}
+header.top{display:flex;align-items:center;gap:.9rem}
+.logo{width:3rem;height:3rem;border:2px solid var(--ink);border-radius:.9rem;background:var(--accent-soft);display:grid;place-items:center;box-shadow:3px 3px 0 var(--ink);font-size:1.5rem}
+h1{margin:0;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+h1 mark{background:var(--accent);color:#fff;padding:0 .35rem;border-radius:.4rem}
+.sub{margin:.2rem 0 0;color:var(--muted);font-size:.9rem}
+h2{margin:0;font-size:1.5rem;font-weight:900;letter-spacing:-.02em}
+h3{margin:0;font-size:1.05rem}
+p{margin:0}
+.stepper{display:flex;gap:.5rem;flex-wrap:wrap}
+.sp{display:flex;align-items:center;gap:.45rem;border:2px solid var(--ink);background:var(--panel);border-radius:.8rem;padding:.3rem .8rem .3rem .4rem;font-weight:700;font-size:.9rem;box-shadow:3px 3px 0 var(--ink)}
+.sp i{font-style:normal;width:1.55rem;height:1.55rem;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:.8rem;background:#fff}
+.sp.on{background:var(--accent);color:#fff}.sp.on i{background:#fff;color:var(--ink)}
+.sp.done i{background:var(--good);color:#fff;border-color:var(--good)}
+.tag{display:inline-block;background:var(--salmon);border:2px solid var(--ink);border-radius:.5rem;padding:.05rem .6rem;font-weight:900;font-size:.8rem;letter-spacing:.04em}
+.step{display:none;flex-direction:column;gap:.9rem}
+.step.on{display:flex}
+.card{background:var(--panel);border:2px solid var(--ink);border-radius:1rem;padding:1rem 1.1rem;box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;gap:.7rem}
+.card.plain{box-shadow:none;border:1.5px solid var(--line)}
+.lead{color:#2f3b36}
+.callout{border-radius:.8rem;padding:.7rem .9rem;background:var(--accent-soft);border-left:5px solid var(--accent);font-size:.92rem}
+.callout.warn{background:var(--warn-soft);border-color:#e0a100}
+.callout.bad{background:var(--bad-soft);border-color:var(--bad)}
+.callout.ok{background:var(--good-soft);border-color:var(--good)}
+.callout.salmon{background:var(--salmon-soft);border-color:var(--salmon)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+label.f{display:flex;flex-direction:column;gap:.3rem;font-weight:700;font-size:.9rem}
+label.f small{font-weight:400;color:var(--muted);font-size:.8rem}
+input[type=text],input[type=password],textarea{border:2px solid var(--ink);border-radius:.7rem;padding:.55rem .75rem;background:#fff;width:100%;font-family:var(--mono);font-size:.9rem}
+textarea{min-height:7rem;resize:vertical}
+input:focus,textarea:focus{outline:3px solid var(--salmon-soft)}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.btn{border:2px solid var(--ink);background:var(--accent);color:#fff;border-radius:.8rem;padding:.5rem 1.1rem;font-weight:700;box-shadow:3px 3px 0 var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.sal{background:var(--salmon);color:var(--ink)}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn.sm{padding:.2rem .7rem;font-size:.8rem;box-shadow:2px 2px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+pre{margin:0;background:#1f2a26;color:#e8efe9;border-radius:.8rem;padding:.8rem 1rem;font-family:var(--mono);font-size:.8rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:18rem;overflow:auto}
+.urlbox{font-family:var(--mono);font-size:.82rem;background:var(--tile);border:2px dashed var(--accent);border-radius:.7rem;padding:.6rem .8rem;overflow-wrap:anywhere}
+.urlbox .k{background:var(--salmon-soft);padding:0 .25rem;border-radius:.3rem}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.tab{border:2px solid var(--ink);background:#fff;border-radius:.8rem;padding:.4rem .9rem;font-weight:700;font-size:.9rem}
+.tab.on{background:var(--ink);color:#fff}
+.pane{display:none;flex-direction:column;gap:.7rem}.pane.on{display:flex}
+.checks{display:flex;flex-direction:column;gap:.5rem;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:.7rem;align-items:flex-start;background:#fff;border:1.5px solid var(--line);border-radius:.8rem;padding:.55rem .8rem}
+.checks li.done{background:var(--good-soft);border-color:var(--good)}
+.checks input{width:1.3rem;height:1.3rem;margin-top:.15rem;accent-color:var(--accent)}
+.checks .t{font-weight:700}.checks .d{font-size:.85rem;color:var(--muted)}
+.status{display:flex;gap:.8rem;align-items:center;border:2px solid var(--ink);border-radius:1rem;padding:.7rem 1rem;background:#fff}
+.status .dot{width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;background:var(--good)}
+.status.err .dot{background:var(--bad)}
+.status.err{background:var(--bad-soft)}.status.ok{background:var(--good-soft)}
+.tabsr{display:flex;gap:.5rem;flex-wrap:wrap}
+.pill{border:2px solid var(--ink);background:#fff;border-radius:999px;padding:.25rem .9rem;font-weight:700;font-size:.9rem}
+.pill.on{background:var(--accent);color:#fff}
+.buses{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.bus{border:2px solid var(--ink);border-radius:1rem;background:#fff;overflow:hidden;box-shadow:4px 4px 0 var(--ink)}
+.bus .big{background:var(--accent);color:#fff;padding:.7rem 1rem;display:flex;align-items:baseline;gap:.6rem}
+.bus .big.none{background:#8b958f}
+.bus .big b{font-size:2rem;line-height:1}.bus .big span{font-size:.85rem;opacity:.9}
+.fl{display:grid;grid-template-columns:1fr auto;gap:.2rem .8rem;padding:.7rem 1rem;font-size:.85rem}
+.fl .k{color:var(--muted)}.fl .v{font-family:var(--mono);text-align:right;overflow-wrap:anywhere}
+.badge{font-size:.72rem;font-weight:700;border-radius:999px;padding:.05rem .6rem;border:1.5px solid var(--ink);background:var(--tile)}
+.nav{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 35%);padding:1.4rem 0 .2rem;display:flex;justify-content:space-between}
+.mut{color:var(--muted)}.sm{font-size:.85rem}
+.sample{background:var(--salmon-soft);border:2px solid var(--ink);border-radius:.6rem;padding:.2rem .7rem;font-size:.85rem;font-weight:700;display:inline-block}
+@media(max-width:700px){.grid2,.buses{grid-template-columns:1fr}h1{font-size:1.5rem}.card{box-shadow:3px 3px 0 var(--ink)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true">🚌</div>
+    <div>
+      <h1>버스 도착 정보 <mark>불러오기</mark></h1>
+      <p class="sub">공공데이터 Open API로 지금 이 정류소에 버스가 몇 분 뒤에 오는지 받아 봐요</p>
+    </div>
+  </header>
+
+  <nav class="stepper" id="stepper" aria-label="단계"></nav>
+
+  <!-- STEP 1 -->
+  <section class="step on" data-step="1">
+    <div><span class="tag">STEP 1</span><h2 style="margin-top:.4rem">준비됐는지 확인해요</h2></div>
+    <p class="lead">API를 부르려면 <b>승인된 인증키</b>와 <b>정류소 ID</b>가 필요해요. 하나씩 확인하고 체크해 보세요.</p>
+    <div class="card">
+      <ul class="checks" id="prep">
+        <li><input type="checkbox" id="c1"><div><div class="t">활용신청이 "활용 중"으로 승인됐어요</div><div class="d">마이페이지 · 활용신청 현황에서 확인해요. 「경기도_버스도착정보 조회」가 보이면 돼요.</div></div></li>
+        <li><input type="checkbox" id="c2"><div><div class="t">인증키를 찾았어요</div><div class="d">마이페이지 · 데이터활용 · Open API · 인증키 발급현황에 있어요. 포털은 같은 키를 Encoding / Decoding 두 모양으로 보여줘요. 어느 쪽을 넣어도 이 페이지가 알아서 맞춰요.</div></div></li>
+        <li><input type="checkbox" id="c3"><div><div class="t">조회할 정류소 ID를 알아요</div><div class="d">이 값은 <b>stationId</b>예요. 화면에 보이는 정류소 번호와 다른 값일 수 있어요. 정류소 정보를 알려 주는 API(예: 경기도_버스정류소 현황)에서 찾을 수 있고, 별도 활용신청이 필요할 수 있어요.</div></div></li>
+      </ul>
+    </div>
+    <div class="callout salmon"><b>아직 승인 전이거나 ID를 못 찾았어도 괜찮아요.</b> "예시 응답으로 먼저 해 보기"로 STEP 4의 결과 화면을 먼저 읽어 볼 수 있어요. 예시는 2026년 10월 14일에 받은 응답이라 지금의 실제 도착 상황이 아니에요.</div>
+    <div class="row">
+      <a class="btn ghost" href="https://www.data.go.kr" target="_blank" rel="noopener">공공데이터포털 열기 ↗</a>
+      <button class="btn sal" type="button" id="sampleFirst">예시 응답으로 먼저 해 보기</button>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step" data-step="2">
+    <div><span class="tag">STEP 2</span><h2 style="margin-top:.4rem">요청 주소 만들기</h2></div>
+    <p class="lead">API 호출은 <b>주소 한 줄</b>이에요. 서비스 주소 뒤에 <code>?</code>를 붙이고, 내 인증키와 정류소 ID를 이어 붙여요.</p>
+    <div class="card">
+      <div class="grid2">
+        <label class="f">인증키 <small>이 화면 안에서만 쓰고 저장하지 않아요. 새로고침하면 사라져요.</small>
+          <input type="password" id="key" autocomplete="off" spellcheck="false" placeholder="Encoding 또는 Decoding 키">
+        </label>
+        <label class="f">정류소 ID (stationId) <small>숫자로 된 정류소 ID</small>
+          <input type="text" id="station" inputmode="numeric" autocomplete="off" placeholder="예: 정류소 ID 입력">
+        </label>
+      </div>
+      <label class="f">서비스 주소 <small>활용가이드의 "요청 주소"와 같은지 한 번 확인해 주세요. 다르면 그대로 바꿔 넣어요.</small>
+        <input type="text" id="base" value="https://apis.data.go.kr/6410000/busarrivalservice/v2/getBusArrivalListv2" spellcheck="false">
+      </label>
+      <label class="f">추가 변수 <small>응답을 JSON으로 받는 변수예요. 활용가이드에 다르게 적혀 있으면 고쳐요. 비워도 돼요.</small>
+        <input type="text" id="extra" value="format=json" spellcheck="false" autocomplete="off">
+      </label>
+    </div>
+    <div class="card plain">
+      <h3>이렇게 만들어져요</h3>
+      <div class="urlbox" id="urlPreview">입력하면 여기에 주소가 보여요.</div>
+      <p class="sm mut">인증키 자리는 화면에서 가려 보여줘요. 이 주소를 친구나 AI 대화창에 보내지 않아요.</p>
+    </div>
+    <div class="callout warn" id="keyWarn" hidden></div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step" data-step="3">
+    <div><span class="tag">STEP 3</span><h2 style="margin-top:.4rem">불러오기</h2></div>
+    <p class="lead">세 가지 방법 중 하나로 응답을 받아 봐요. 첫 번째가 안 되면 두 번째, 그래도 안 되면 세 번째로 이어가요.</p>
+    <div class="tabs" id="modeTabs">
+      <button class="tab on" data-m="direct" type="button">① 바로 불러오기</button>
+      <button class="tab" data-m="paste" type="button">② 주소창에서 열고 붙여넣기</button>
+      <button class="tab" data-m="sample" type="button">③ 예시 응답으로 보기</button>
+    </div>
+
+    <div class="pane on card" data-pane="direct">
+      <p>버튼을 누르면 이 화면이 대신 요청을 보내고 응답을 받아요. 누를 때마다 <b>하루 사용 한도</b>가 1회씩 줄어요.</p>
+      <div class="row"><button class="btn" id="goFetch" type="button">버스 도착 정보 불러오기</button><span class="sm mut" id="callCount">이번 화면에서 0회 호출</span></div>
+      <div class="callout" id="fetchMsg" hidden></div>
+    </div>
+
+    <div class="pane card" data-pane="paste">
+      <p>브라우저가 이 화면에서 직접 호출하는 것을 막는 경우에 쓰는 방법이에요. 새 탭에서 주소를 열고, 나온 글자를 통째로 복사해서 아래에 붙여 넣어요.</p>
+      <div class="row"><button class="btn ghost" id="openTab" type="button">새 탭에서 주소 열기 ↗</button></div>
+      <div class="callout warn sm">새 탭의 주소창에는 내 인증키가 그대로 들어가요. 그 주소를 캡처하거나 공유하지 않아요.</div>
+      <textarea id="pasteBox" placeholder="새 탭에 나온 글자를 여기에 붙여 넣어요 (JSON 또는 XML)"></textarea>
+      <div class="row"><button class="btn" id="goPaste" type="button">결과 읽기</button></div>
+      <div class="callout" id="pasteMsg" hidden></div>
+    </div>
+
+    <div class="pane card" data-pane="sample">
+      <p>2026년 10월 14일 오후 1시 31분에 포털 미리보기에서 받은 응답으로 만든 예시예요. <b>지금의 실제 도착 상황이 아니에요.</b></p>
+      <div class="row"><button class="btn sal" id="goSample" type="button">예시 응답으로 보기</button></div>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="step" data-step="4">
+    <div><span class="tag">STEP 4</span><h2 style="margin-top:.4rem">결과 보기</h2></div>
+    <div id="noResult" class="callout">아직 받은 응답이 없어요. STEP 3에서 응답을 받아 오세요.</div>
+    <div id="resultArea" hidden style="display:none;flex-direction:column;gap:.9rem">
+      <div class="row" id="sourceRow"></div>
+      <div class="status" id="statusBox"><div class="dot" id="statusDot"></div><div><b id="statusTitle"></b><div class="sm mut" id="statusSub"></div></div></div>
+      <div id="errHelp" class="callout bad" hidden></div>
+      <div class="tabsr" id="routeTabs"></div>
+      <div class="buses" id="buses"></div>
+      <details class="card plain">
+        <summary style="cursor:pointer;font-weight:700">받은 응답 원본 보기</summary>
+        <pre id="raw" style="margin-top:.6rem"></pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- STEP 5 -->
+  <section class="step" data-step="5">
+    <div><span class="tag">STEP 5</span><h2 style="margin-top:.4rem">생각해 보기와 다음 걸음</h2></div>
+    <div class="card">
+      <h3>이야기해 봐요</h3>
+      <ol style="margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.45rem">
+        <li><code>resultCode</code>가 정상이면 인증키도 잘 된 걸까요? 정상인데 버스가 없으면 무슨 뜻일까요?</li>
+        <li>버스가 한 대만 올 때나 값이 <code>""</code>일 때, 내 화면은 어떻게 보여 줘야 할까요?</li>
+        <li>이 정보를 하루 1,000번만 부를 수 있다면, 어떤 서비스를 만들 때 조심해야 할까요?</li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3>내 앱으로 이어가기: AI에게 보낼 말</h3><button class="btn sm" id="copyAi" type="button">복사</button></div>
+      <pre id="aiPrompt"></pre>
+      <p class="sm mut">【 】 칸은 활용가이드에서 복사해 꼭 바꿔 넣어요. 인증키는 이 글에 들어 있지 않아요. 키는 AI 대화창에 보내지 않고, 만들어진 파일의 API_KEY 자리에만 직접 넣어요.</p>
+    </div>
+  </section>
+
+  <div class="nav">
+    <button class="btn ghost" id="prev" type="button">← 이전</button>
+    <button class="btn" id="next" type="button">다음 →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  var TITLES=['준비 확인','요청 주소','불러오기','결과 보기','생각해 보기'];
+  var step=1,mode='direct',calls=0,lastFetch=0,result=null,routeIdx=0;
+  var maxStep=1;
+
+  /* ---------- stepper ---------- */
+  function drawStepper(){
+    $('#stepper').innerHTML=TITLES.map(function(t,i){var n=i+1;
+      return '<button class="sp'+(n===step?' on':'')+(n<step?' done':'')+'" data-s="'+n+'" type="button"><i>'+(n<step?'✓':n)+'</i>'+t+'</button>'}).join('');
+  }
+  function setStep(n){
+    step=Math.max(1,Math.min(5,n));
+    $$('.step').forEach(function(s){s.classList.toggle('on',+s.dataset.step===step)});
+    $('#prev').style.visibility=step===1?'hidden':'visible';
+    $('#next').style.visibility=step===5?'hidden':'visible';
+    drawStepper();
+    if(step===2)updatePreview();
+    if(step===5)buildAi();
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  $('#stepper').addEventListener('click',function(e){var b=e.target.closest('[data-s]');if(b)setStep(+b.dataset.s)});
+  $('#prev').addEventListener('click',function(){setStep(step-1)});
+  $('#next').addEventListener('click',function(){setStep(step+1)});
+
+  /* ---------- STEP 1 ---------- */
+  $$('#prep input').forEach(function(c){c.addEventListener('change',function(){c.closest('li').classList.toggle('done',c.checked)})});
+  $('#sampleFirst').addEventListener('click',function(){showResult(SAMPLE,'sample');setStep(4)});
+
+  /* ---------- STEP 2: url ---------- */
+  function cleanKey(raw){
+    raw=(raw||'').trim();
+    if(!raw)return {enc:'',note:''};
+    var note='',dec=raw;
+    if(/%[0-9A-Fa-f]{2}/.test(raw)){
+      try{dec=decodeURIComponent(raw);note='Encoding 키로 보여서 한 번 풀었다가 다시 맞췄어요.'}catch(e){dec=raw;note='키 모양을 읽는 중 문제가 있었어요. 포털에서 다시 복사해 보세요.'}
+    }
+    return {enc:encodeURIComponent(dec),note:note,dec:dec};
+  }
+  function buildUrl(maskKey){
+    var base=$('#base').value.trim(),st=$('#station').value.trim(),extra=$('#extra').value.trim().replace(/^[?&]+/,'');
+    var k=cleanKey($('#key').value);
+    var q=['serviceKey='+(maskKey?'●●●●●●(내 인증키)':k.enc),'stationId='+encodeURIComponent(st)];
+    if(extra)q.push(extra);
+    return {url:base+'?'+q.join('&'),ok:!!(base&&st&&k.enc),note:k.note,missing:[!k.enc&&'인증키',!st&&'정류소 ID',!base&&'서비스 주소'].filter(Boolean)};
+  }
+  function updatePreview(){
+    var u=buildUrl(true);
+    var base=$('#base').value.trim(),st=$('#station').value.trim(),extra=$('#extra').value.trim().replace(/^[?&]+/,'');
+    var html=esc(base)+'?serviceKey=<span class="k">●●●●●●(내 인증키)</span>&amp;stationId='+esc(encodeURIComponent(st)||'(정류소 ID)')+(extra?'&amp;'+esc(extra):'');
+    $('#urlPreview').innerHTML=html;
+    var w=$('#keyWarn'),msgs=[];
+    if(u.note)msgs.push(u.note);
+    if(u.missing.length)msgs.push('아직 비어 있어요: '+u.missing.join(', '));
+    w.hidden=!msgs.length;w.textContent=msgs.join(' ');
+  }
+  ['key','station','base','extra'].forEach(function(id){$('#'+id).addEventListener('input',updatePreview)});
+  updatePreview();
+
+  /* ---------- STEP 3: modes ---------- */
+  $('#modeTabs').addEventListener('click',function(e){var b=e.target.closest('[data-m]');if(!b)return;mode=b.dataset.m;
+    $$('#modeTabs .tab').forEach(function(t){t.classList.toggle('on',t===b)});
+    $$('.pane').forEach(function(p){p.classList.toggle('on',p.dataset.pane===mode)})});
+  function say(el,cls,html){el.hidden=false;el.className='callout '+cls;el.innerHTML=html}
+  function maskKeyIn(text){
+    var k=cleanKey($('#key').value);var out=String(text);
+    [k.enc,k.dec,($('#key').value||'').trim()].forEach(function(s){if(s&&s.length>6)out=out.split(s).join('●●●●●●')});
+    return out;
+  }
+
+  $('#goFetch').addEventListener('click',function(){
+    var msg=$('#fetchMsg'),u=buildUrl(false);
+    if(!u.ok){say(msg,'warn','STEP 2에서 비어 있는 칸을 채워 주세요: '+esc(u.missing.join(', ')));return}
+    var now=Date.now();if(now-lastFetch<2500){say(msg,'warn','잠깐만요. 너무 자주 누르면 하루 한도가 금방 줄어요.');return}
+    lastFetch=now;calls++;$('#callCount').textContent='이번 화면에서 '+calls+'회 호출';
+    var btn=$('#goFetch');btn.disabled=true;say(msg,'','불러오는 중이에요…');
+    var ctl=('AbortController' in window)?new AbortController():null;
+    var to=setTimeout(function(){if(ctl)ctl.abort()},15000);
+    fetch(u.url,ctl?{signal:ctl.signal}:{}).then(function(r){return r.text().then(function(t){return {status:r.status,text:t}})})
+    .then(function(r){
+      clearTimeout(to);btn.disabled=false;
+      if(!r.text||!r.text.trim()){say(msg,'bad','응답이 비어 있어요. (HTTP '+r.status+')');return}
+      try{showResult(r.text,'live');say(msg,'ok','응답을 받았어요. STEP 4에서 읽어 봐요.');setStep(4)}
+      catch(e){say(msg,'bad','응답을 읽지 못했어요: '+esc(e.message)+'<br><span class="sm">받은 글자 앞부분: '+esc(maskKeyIn(r.text.slice(0,160)))+'</span>')}
+    })
+    .catch(function(err){
+      clearTimeout(to);btn.disabled=false;
+      var aborted=err&&err.name==='AbortError';
+      say(msg,'bad','<b>'+(aborted?'15초 안에 응답이 오지 않았어요.':'브라우저가 이 요청을 보내지 못했어요.')+'</b><br>'+
+        '인터넷이 느리거나, 브라우저 보안 규칙(CORS)이 직접 호출을 막았을 수 있어요. 이 경우 키가 틀린 게 아니에요.<br>'+
+        '<b>② 주소창에서 열고 붙여넣기</b>나 <b>③ 예시 응답으로 보기</b>로 이어가요.');
+    });
+  });
+
+  $('#openTab').addEventListener('click',function(){
+    var u=buildUrl(false);var msg=$('#pasteMsg');
+    if(!u.ok){say(msg,'warn','STEP 2에서 비어 있는 칸을 채워 주세요: '+esc(u.missing.join(', ')));return}
+    window.open(u.url,'_blank','noopener');
+  });
+  $('#goPaste').addEventListener('click',function(){
+    var t=$('#pasteBox').value,msg=$('#pasteMsg');
+    if(!t.trim()){say(msg,'warn','붙여 넣은 글자가 없어요.');return}
+    try{showResult(t,'paste');say(msg,'ok','읽었어요. STEP 4에서 확인해요.');setStep(4)}
+    catch(e){say(msg,'bad','읽지 못했어요: '+esc(e.message))}
+  });
+  $('#goSample').addEventListener('click',function(){showResult(SAMPLE,'sample');setStep(4)});
+
+  /* ---------- parsing ---------- */
+  function xmlToObj(node){
+    var kids=Array.prototype.filter.call(node.childNodes,function(n){return n.nodeType===1});
+    if(!kids.length)return (node.textContent||'').trim();
+    var o={};kids.forEach(function(k){var v=xmlToObj(k);if(o.hasOwnProperty(k.nodeName)){if(!Array.isArray(o[k.nodeName]))o[k.nodeName]=[o[k.nodeName]];o[k.nodeName].push(v)}else o[k.nodeName]=v});
+    return o;
+  }
+  function parseAny(text){
+    text=String(text).replace(/^﻿/,'').trim();
+    if(text[0]==='{'||text[0]==='['){return JSON.parse(text)}
+    if(text[0]==='<'){
+      var doc=new DOMParser().parseFromString(text,'text/xml');
+      if(doc.querySelector('parsererror'))throw new Error('XML 모양이 올바르지 않아요');
+      var o={};o[doc.documentElement.nodeName]=xmlToObj(doc.documentElement);return o;
+    }
+    throw new Error('JSON도 XML도 아닌 글이에요');
+  }
+  function findKey(o,names){
+    if(o&&typeof o==='object'){
+      for(var k in o){if(names.indexOf(k)>-1&&(typeof o[k]!=='object'))return o[k]}
+      for(var k2 in o){var r=findKey(o[k2],names);if(r!==undefined)return r}
+    }
+    return undefined;
+  }
+  function findList(o){
+    if(o&&typeof o==='object'){
+      if(o.busArrivalList!==undefined){var v=o.busArrivalList;return Array.isArray(v)?v:(v&&typeof v==='object'?[v]:[])}
+      for(var k in o){var r=findList(o[k]);if(r)return r}
+    }
+    return null;
+  }
+  var GATE={
+    '1':'어플리케이션 에러','2':'데이터베이스 에러','3':'데이터 없음','4':'HTTP 에러','5':'서비스 연결 실패',
+    '10':'잘못된 요청 변수','11':'필수 요청 변수가 없음','12':'서비스가 없거나 폐기됨','20':'서비스 접근이 거부됨',
+    '22':'하루 요청 횟수 초과','30':'등록되지 않은 서비스키','31':'기한이 만료된 서비스키','32':'등록되지 않은 IP'
+  };
+
+  /* ---------- show result ---------- */
+  function showResult(text,src){
+    var obj=parseAny(text);
+    var gateCode=findKey(obj,['returnReasonCode']),gateMsg=findKey(obj,['returnAuthMsg','errMsg']);
+    var code=findKey(obj,['resultCode']),rmsg=findKey(obj,['resultMessage','resultMsg']);
+    var list=findList(obj);
+    result={src:src,obj:obj,raw:String(text),gateCode:gateCode,gateMsg:gateMsg,code:code,msg:rmsg,list:list||[]};
+    routeIdx=0;
+    $('#raw').textContent=maskKeyIn(JSON.stringify(obj,null,2));
+    renderResult();
+  }
+  function isOk(){
+    if(result.gateCode!==undefined)return false;
+    var c=String(result.code);return c==='0'||c==='00';
+  }
+  function renderResult(){
+    var r=result;
+    $('#noResult').style.display='none';
+    var ra=$('#resultArea');ra.hidden=false;ra.style.display='flex';
+    $('#sourceRow').innerHTML=r.src==='sample'?'<span class="sample">예시 응답 · 2026-10-14 13:31 수신 · 지금의 실제 도착 상황이 아니에요</span>':
+      '<span class="badge">'+(r.src==='live'?'방금 불러온 응답':'붙여 넣은 응답')+'</span>';
+    var st=$('#statusBox'),ok=isOk();
+    st.className='status '+(ok?'ok':'err');
+    $('#statusDot').textContent=ok?'✓':'!';
+    var help=$('#errHelp');help.hidden=true;
+    if(r.gateCode!==undefined){
+      $('#statusTitle').textContent='포털에서 요청을 돌려보냈어요 (코드 '+r.gateCode+')';
+      $('#statusSub').textContent=(GATE[String(r.gateCode)]||'')+(r.gateMsg?' · '+r.gateMsg:'');
+      help.hidden=false;
+      help.innerHTML='<b>이건 코드 문제가 아니라 키나 신청 쪽일 때가 많아요.</b><br>'+
+        '• 30이나 31이면 키를 다시 복사하거나 Encoding/Decoding 다른 쪽을 넣어 봐요. 방금 발급받았다면 잠시 뒤에 다시 해요.<br>'+
+        '• 22면 오늘 한도를 다 쓴 거예요. 예시 응답으로 이어가요.<br>'+
+        '• 코드의 뜻은 활용가이드의 오류코드표가 기준이에요.';
+    } else if(!ok){
+      $('#statusTitle').textContent='resultCode '+(r.code===undefined?'(없음)':r.code)+(r.msg?' · '+r.msg:'');
+      $('#statusSub').textContent='정상이 아니에요. 아래 확인할 것을 살펴봐요.';
+      help.hidden=false;
+      help.innerHTML='<b>확인할 것</b><br>• 정류소 ID(stationId)가 맞는지, 숫자만 넣었는지<br>• 서비스 주소가 활용가이드의 요청 주소와 같은지<br>• 응답 원본의 메시지를 그대로 읽어 봐요. 그 문구를 AI에게 붙여 넣고 물어봐도 좋아요(인증키는 지우고).';
+    } else {
+      $('#statusTitle').textContent='정상 처리됐어요 (resultCode '+r.code+')';
+      $('#statusSub').textContent=(r.msg||'')+(r.list.length?' · 노선 '+r.list.length+'개':' · 도착 정보가 있는 노선이 없어요');
+    }
+    var tabs=$('#routeTabs'),buses=$('#buses');
+    if(!ok||!r.list.length){tabs.innerHTML='';buses.innerHTML=ok?'<div class="callout">이 정류소에 도착 예정 버스가 없다는 뜻일 수 있어요. 정류소 ID가 맞는지도 확인해 봐요.</div>':'';return}
+    tabs.innerHTML=r.list.map(function(b,i){return '<button class="pill'+(i===routeIdx?' on':'')+'" data-i="'+i+'" type="button">'+esc(b.routeName!==undefined&&b.routeName!==''?b.routeName+'번':'노선 '+(i+1))+'</button>'}).join('');
+    drawBuses();
+  }
+  $('#routeTabs').addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(!b)return;routeIdx=+b.dataset.i;
+    $$('#routeTabs .pill').forEach(function(p,i){p.classList.toggle('on',i===routeIdx)});drawBuses()});
+  function val(v){return(v===undefined||v===null)?'(항목 없음)':(v===''?'""':String(v))}
+  function drawBuses(){
+    var b=result.list[routeIdx]||{};
+    var head='<div class="card plain" style="grid-column:1/-1;flex-direction:row;align-items:baseline;gap:.6rem"><b>'+esc(val(b.routeName))+'번</b> <span class="mut">'+(b.routeDestName?esc(b.routeDestName)+' 방면':'')+'</span></div>';
+    var cards=[1,2].map(function(q){
+      var t=b['predictTime'+q],none=(t===undefined||t===null||t==='');
+      function row(l,code,v){return '<span class="k">'+l+' <code>'+code+q+'</code></span><span class="v">'+esc(val(v))+'</span>'}
+      return '<div class="bus"><div class="big'+(none?' none':'')+'"><b>'+(none?'정보 없음':esc(t)+'분')+'</b><span>'+(q===1?'첫':'두')+' 번째 버스</span></div><div class="fl">'+
+        row('도착 예정(분)','predictTime',t)+row('몇 정거장 전','locationNo',b['locationNo'+q])+row('지금 있는 정류소','stationNm',b['stationNm'+q])+
+        row('차량 번호','plateNo',b['plateNo'+q])+row('저상버스 여부','lowPlate',b['lowPlate'+q])+row('남은 좌석','remainSeatCnt',b['remainSeatCnt'+q])+'</div></div>';
+    }).join('');
+    $('#buses').innerHTML=head+cards+'<div class="callout sm" style="grid-column:1/-1">값이 <code>""</code>이면 그 버스가 없다는 뜻이에요. <code>lowPlate</code>의 1과 0, <code>remainSeatCnt</code>의 뜻은 활용가이드의 응답 항목표로 확인해요. 같은 이름 끝의 1, 2는 첫 번째, 두 번째 버스예요.</div>';
+  }
+
+  /* ---------- sample ---------- */
+  var SAMPLE=JSON.stringify({response:{msgHeader:{queryTime:'2026-10-14 13:31:00',resultCode:0,resultMessage:'정상적으로 처리되었습니다.'},msgBody:{busArrivalList:[
+    {routeName:301,routeDestName:'수월암차고지',predictTime1:6,locationNo1:4,plateNo1:'경기70사1278',stationNm1:'경남아너스빌.동신아파트',lowPlate1:1,remainSeatCnt1:0,predictTime2:19,locationNo2:11,plateNo2:'경기70사1279',stationNm2:'지지대고개(미정차)',lowPlate2:1,remainSeatCnt2:0},
+    {routeName:65,routeDestName:'광교차고지',predictTime1:13,locationNo1:8,plateNo1:'경기77바2665',stationNm1:'이목동.장안힐스테이트',lowPlate1:0,remainSeatCnt1:0,predictTime2:18,locationNo2:10,plateNo2:'경기77바2659',stationNm2:'효행공원(미정차)',lowPlate2:0,remainSeatCnt2:0},
+    {routeName:5,routeDestName:'경희대학교',predictTime1:11,locationNo1:6,plateNo1:'경기70바2374',stationNm1:'북수원시장입구',lowPlate1:1,remainSeatCnt1:0,predictTime2:'',locationNo2:'',plateNo2:'',stationNm2:'',lowPlate2:'',remainSeatCnt2:0}
+  ]}}});
+
+  /* ---------- STEP 5 ---------- */
+  function buildAi(){
+    var st=$('#station').value.trim();
+    $('#aiPrompt').textContent='공공데이터포털의 「경기도_버스도착정보 조회」 Open API(목록조회)로 버스 도착 안내 웹페이지를 index.html 파일 하나로 만들어줘.\n\n'+
+    '아래 활용가이드의 요청 주소와 응답 예시를 그대로 따라줘. 필드명은 추측하지 말고 응답 예시에 있는 이름만 써줘.\n'+
+    '【여기에 활용가이드의 요청 주소와 미리보기 응답을 붙여넣기】\n\n'+
+    '조건:\n- 인증키는 파일 맨 위의 API_KEY 변수에 빈 칸으로 두고, 내가 직접 넣을게. 넣은 값은 그대로 쓰고, 코드에서 다시 인코딩하지 말아줘.\n'+
+    '- 조회할 정류소 ID(stationId)는 '+(st?st:'【내 정류소 ID】')+'로 해줘.\n'+
+    '- 응답은 JSON으로 받아줘.\n- 버스가 1대만 오거나 값이 빈 글자("")여도 화면이 깨지지 않게 해줘.\n'+
+    '- 호출이 실패하면 화면에 resultCode, resultMessage와 오류 내용을 그대로 보여줘.\n- 스마트폰 화면 기준으로 만들어줘.';
+  }
+  $('#copyAi').addEventListener('click',function(){
+    var b=this,o=b.textContent,t=$('#aiPrompt').textContent;
+    function done(m){b.textContent=m;setTimeout(function(){b.textContent=o},1500)}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){done('복사됨')},function(){done('직접 복사해 주세요')});else done('직접 복사해 주세요');
+  });
+
+  setStep(1);
+})();
+</script>
+</body>
+</html>
