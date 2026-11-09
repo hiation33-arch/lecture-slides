@@ -5,10 +5,10 @@
  */
 window.LECTURE_CONFIG={
   firebase:{
-    apiKey:"",
-    authDomain:"",
-    databaseURL:"",
-    projectId:"",
-    appId:""
+    apiKey:"AIzaSyCSQkD5SC1o0g0lhptQWgXhXCzF70bpkaI",
+    authDomain:"lecture-sync-d1a0c.firebaseapp.com",
+    databaseURL:"https://lecture-sync-d1a0c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"lecture-sync-d1a0c",
+    appId:"1:354252631523:web:32252458e29bc810e944d6"
   }
 };
