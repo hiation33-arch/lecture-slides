@@ -33,6 +33,10 @@ b,strong{font-weight:700}
 .part{font-size:.62em;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
 .part.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .topbar .sp{flex:1}
+.codejoin[hidden]{display:none}
+.codejoin{display:flex;align-items:center;gap:6px;font-size:.62em;font-weight:700;color:var(--accent-d)}
+.codejoin input{width:7.5em;font:inherit;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;border:1px solid var(--accent);background:#fff;color:var(--ink)}
+.codejoin button{font:inherit;font-weight:700;padding:4px 12px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
 .count{font-size:.7em;color:var(--muted);font-family:var(--mono)}
 .tbtn{font-size:.62em;font-weight:700;padding:4px 12px;border-radius:999px;border:1px solid var(--accent);background:var(--panel);color:var(--accent-d)}
 .deck{position:relative;flex:1;min-height:0}
@@ -226,6 +230,7 @@ pre{margin:0;background:#1f2a26;color:#e8efe9;border-radius:12px;padding:.8em 1e
     <div class="topbar">
       <div class="parts" id="parts"></div>
       <span class="sp"></span>
+      <form class="codejoin" id="codeJoin" hidden autocomplete="off"><label for="codeIn">수업 코드</label><input id="codeIn" type="text" maxlength="12" inputmode="latin" autocapitalize="characters" placeholder="코드"><button type="submit">들어가기</button></form>
       <button class="tbtn sync" id="syncChip" type="button" hidden></button>
       <button class="tbtn" id="tBtn" type="button" hidden>강사 서랍</button>
       <button class="tbtn resbtn" id="resBtn" type="button">자료</button>
@@ -1032,7 +1037,22 @@ iframe 안에서는 화살표 키가 슬라이드를 넘기지 않아요. 슬라
   }
   $('#syncChip').addEventListener('click',function(){
     if(teacher){$('#drawer').classList.add('open');return}
-    if(sync.ready&&remote&&remote.slide&&!followMode){followMode=true;followTo(remote.slide);updateChip()}
+    if(sync.ready&&remote&&remote.slide&&!followMode){followMode=true;followTo(remote.slide);updateChip();return}
+    if(sync.ready&&(!remote||!remote.slide)){showCodeForm(true)}
+  });
+  function showCodeForm(force){
+    var f=$('#codeJoin');if(!f)return;
+    f.hidden=!(hasBackend&&!teacher&&(force||!room));
+    if(!f.hidden){var i=$('#codeIn');i.value=room||'';try{i.focus()}catch(e){}}
+  }
+  $('#codeJoin').addEventListener('submit',function(e){
+    e.preventDefault();
+    var c=cleanCode($('#codeIn').value);if(!c)return;
+    room=c;followMode=true;remote=null;sync.err=null;
+    try{var u=new URL(location.href);u.searchParams.set('room',c);history.replaceState(null,'',u.toString())}catch(x){}
+    updateJoin();
+    if(sync.be&&sync.ready)watch();else startSync();
+    $('#codeJoin').hidden=true;updateChip();
   });
 
   function updateSyncUi(){
@@ -1129,7 +1149,7 @@ iframe 안에서는 화살표 키가 슬라이드를 넘기지 않아요. 슬라
   if(teacher&&!room&&hasBackend){room=cleanCode(store(true,'lec-room'))||genCode();store(false,'lec-room',room)}
   updateJoin();
   if(hasBackend&&room)startSync();
-  updateSyncUi();
+  updateSyncUi();showCodeForm(false);
 
   /* ---------- start ---------- */
   refreshJump();
