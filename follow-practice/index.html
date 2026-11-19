@@ -173,6 +173,9 @@ button{font:inherit;color:inherit}
 .oxres .vd{display:inline-block;border-radius:999px;font-weight:700;font-size:14px;padding:2px 14px;margin-bottom:6px}
 .oxres .vd.g{background:var(--goodbg);color:var(--good)} .oxres .vd.b{background:var(--badbg);color:var(--bad)}
 .oxside .ch{margin-top:46px}
+.say{border:1.6px solid var(--ink);background:var(--white);border-radius:16px;padding:14px 18px 15px;font-size:17px;line-height:1.55;margin-top:18px}
+.say small{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.pbox.tpl{white-space:pre-line;font-size:16.5px;line-height:1.6;padding:22px 24px 18px}
 
 .take{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;align-items:start}
 .take .bub{padding:40px 18px 44px;text-align:center}
@@ -255,6 +258,7 @@ body .fl-code input,body .fl-panel input{border-width:1.6px}
     <div class="ag"><span class="n">03</span><span class="t">내 지역, 인구 보정 계산</span><span class="o">프롬프트 ②</span></div>
     <div class="ag"><span class="n">04</span><span class="t">대시보드 만들기</span><span class="o">프롬프트 ③</span></div>
     <div class="ag"><span class="n">05</span><span class="t">고치고 숫자 점검하기</span><span class="o">고치기 모음, 프롬프트 ④</span></div>
+    <div class="ag"><span class="n">06</span><span class="t">내가 만드는 클릭 페이지</span><span class="o">눌렀을 때 일어나는 일 적기, 프롬프트 ⑤</span></div>
   </div>
 </section>
 
@@ -492,14 +496,72 @@ body .fl-code input,body .fl-panel input{border-width:1.6px}
   </div>
 </section>
 
-<!-- 14 마무리 -->
-<section class="slide" id="s14" data-label="마무리" hidden>
+<!-- 14 어떻게 만들었을까 (유연) -->
+<section class="slide" id="s14" data-label="어떻게 만들었을까" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>직접 만들기</span></div>
+  <h2 class="h">방금 쓴 페이지, <span class="w">어떻게</span> 만들었을까요?</h2>
+  <div class="content">
+    <div class="row3">
+      <div class="bub acc t-bl"><div class="num">01</div><div class="bh">복사 상자</div><p class="bp">상자를 누르면 안의 글이 복사돼요.</p>
+        <div class="say"><small>AI에게는 이렇게 말해요</small>누르면 안의 글이 복사되고, 잠깐 "복사됨"으로 바뀌게 해줘.</div></div>
+      <div class="bub wht t-bc"><div class="num">02</div><div class="bh">열기 버튼</div><p class="bp">버튼을 누르면 새 창으로 사이트가 열려요.</p>
+        <div class="say"><small>AI에게는 이렇게 말해요</small>[사이트 이름] 열기 버튼을 만들고, 누르면 새 창으로 열리게 해줘.</div></div>
+      <div class="bub pale t-br"><div class="num">03</div><div class="bh">선택 칸</div><p class="bp">지역을 고르면 글 속 지역 이름이 바뀌어요.</p>
+        <div class="say"><small>AI에게는 이렇게 말해요</small>지역 선택 칸을 만들고, 고르면 위 글의 지역 이름이 바뀌게 해줘.</div></div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">한 줄</span><span>버튼을 누르면 ○○이(가) 되는 페이지를 만들어줘. 이 문장이 출발점이에요.</span></div>
+  </div>
+</section>
+
+<!-- 15 눌렀을 때 일어나는 일 적기 -->
+<section class="slide" id="s15" data-label="클릭 페이지 프롬프트" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>프롬프트 ⑤</span></div>
+  <h2 class="h">눌렀을 때 <span class="w">일어나는 일</span>을 적어요</h2>
+  <div class="content">
+    <div class="pgrid">
+      <div class="bub acc t-r l" style="--ty:40%">
+        <div class="rl">프롬프트에 넣을 것 4가지</div>
+        <ol>
+          <li>누가, 무엇을 하려고 보는 페이지인지</li>
+          <li>무엇이 몇 개 있는지</li>
+          <li><b>눌렀을 때 무슨 일이 일어나는지</b></li>
+          <li>형태 (파일 하나, 휴대폰, 큰 글자)</li>
+        </ol>
+      </div>
+      <div class="bub wht t-l r" style="--ty:40%">
+        <div class="rl">프롬프트 ⑤ 빈칸 채우기</div>
+        <button type="button" class="pbox tpl" data-key="p5" data-hint="눌러서 복사"></button>
+        <p class="bp" style="font-size:17px;margin-top:-4px">[ ] 안을 내 수업에 맞게 바꿔요. 예: [동아리 멤버]가 [따라 하려고]</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">핵심</span><span>3번이 가장 중요해요. 복사, 열기, 바꾸기, 보이기처럼 동작으로 적어요.</span></div>
+  </div>
+</section>
+
+<!-- 16 만든 뒤에 할 일 (유연) -->
+<section class="slide" id="s16" data-label="만든 뒤에" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>만든 뒤에</span></div>
+  <h2 class="h">만든 뒤에는 <span class="w">눌러 보고</span> 고쳐요</h2>
+  <div class="content" style="margin-top:14px">
+    <div class="trow"><div class="s">마음에 안 들 때<small>한 번에 하나씩만 고쳐요</small></div><button type="button" class="pbox sm" data-text="'복사됨' 표시를 더 눈에 띄게 하고, 3초 뒤에 원래대로 돌아가게 고쳐줘." data-hint="눌러서 복사">"복사됨" 표시를 더 눈에 띄게 하고, 3초 뒤에 원래대로 돌아가게 고쳐줘.</button></div>
+    <div class="trow"><div class="s">눌러도 반응이 없을 때<small>무슨 일이 일어나야 하는지 다시 적어요</small></div><button type="button" class="pbox sm" data-text="[버튼 이름]을 눌러도 아무 일이 없어. 누르면 [원하는 동작]이 되도록 고쳐줘." data-hint="눌러서 복사">[버튼 이름]을 눌러도 아무 일이 없어. 누르면 [원하는 동작]이 되도록 고쳐줘.</button></div>
+    <div class="trow"><div class="s">링크가 열리는지<small>주소는 내가 적고, 눌러서 확인해요</small></div><button type="button" class="pbox sm" data-text="페이지에 들어간 링크 주소를 전부 나열해줘. 내가 알려준 주소와 다른 게 있으면 알려줘." data-hint="눌러서 복사">페이지에 들어간 링크 주소를 전부 나열해줘. 내가 알려준 주소와 다른 게 있으면 알려줘.</button></div>
+    <div class="trow"><div class="s">다른 사람에게 보내려면<small>만드는 것과 공유는 다른 단계예요</small></div><button type="button" class="pbox sm" data-text="이 페이지를 링크로 다른 사람에게 보내려면 어떻게 해야 해? 내가 쓰는 AI 기준으로 단계별로 알려줘." data-hint="눌러서 복사">이 페이지를 링크로 다른 사람에게 보내려면 어떻게 해야 해? 내가 쓰는 AI 기준으로 단계별로 알려줘.</button></div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">Tip</span><span>고친 뒤에는 꼭 다시 눌러 봐요. 눌러 봐야 맞게 만들어졌는지 알 수 있어요.</span></div>
+  </div>
+</section>
+
+<!-- 17 마무리 -->
+<section class="slide" id="s17" data-label="마무리" hidden>
   <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>Key takeaways</span></div>
   <h2 class="h">오늘 <span class="w">가져갈 것</span></h2>
   <div class="content">
     <div class="take" id="takeRow"></div>
     <div class="endrow">
-      <div class="bub acc t-r" style="--ty:50%"><div class="bh">다음 모임까지</div><p class="bp">내 수업에 쓸 프롬프트를 <b>한 세트</b> 만들어 와요. 파일 읽기, 계산, 화면, 점검 네 개면 충분해요.</p>
+      <div class="bub acc t-r" style="--ty:50%"><div class="bh">다음 모임까지</div><p class="bp">눌러서 복사되는 페이지를 <b>하나</b> 만들어 와요. 내 수업에 쓸 프롬프트 두세 개를 복사 상자로 넣으면 충분해요.</p>
         <div class="acts"><button type="button" class="btn ol" id="toFirst">처음으로</button></div></div>
       <svg class="ch" viewBox="0 0 220 262" style="width:190px;height:226px"><use href="#ch-think"/></svg>
     </div>
@@ -510,7 +572,7 @@ body .fl-code input,body .fl-panel input{border-width:1.6px}
 
 <div class="nav" role="navigation" aria-label="쪽 이동">
   <button type="button" id="prev" aria-label="이전"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-  <span class="cnt" id="cnt">01 <span>/ 14</span></span>
+  <span class="cnt" id="cnt">01 <span>/ 17</span></span>
   <button type="button" id="next" aria-label="다음"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
 </div>
 
@@ -530,6 +592,7 @@ var CONFIG={
     p1:'첨부한 두 파일은 공공데이터야. 하나는 경찰청 범죄 발생 지역별 통계(CSV), 다른 하나는 시군별 인구(엑셀)야. 아직 분석이나 화면 제작은 하지 말고, 각 파일의 구조만 알려줘. 어떤 열이 지역인지, 범죄 종류는 몇 개인지, 경기도 시군은 몇 개인지, 인구 단위는 무엇인지, 못 쓸 부분이 있는지 말해줘.',
     p2:'내가 비교하고 싶은 지역: {지역}. 경기도 시군별 총 범죄 건수와 인구 1만 명당 건수를 표로 보여줘. 내 지역의 건수 순위와 1만 명당 순위를 알려주고, 두 순위가 다르면 이유를 한 줄로 설명해줘.',
     p3:'방금 계산한 결과로 HTML 대시보드를 만들어줘. 꼭 들어갈 것: 내 지역({지역})의 건수와 순위, 1만 명당 건수와 순위, 시군 비교 막대그래프에서 내 지역 강조, 맨 아래 출처와 기준 연도. 디자인은 알아서 정하고, 숫자는 파일에 있는 값만 써줘.',
+    p5:'[누가 보는지]가 [무엇을 하려고] 쓰는 페이지를 HTML 파일 하나로 만들어줘.\n넣을 것:\n- [글] 상자 [몇] 개: 누르면 안의 글이 복사되고, 잠깐 "복사됨"으로 바뀌게 해줘.\n- [사이트 이름] 열기 버튼: 누르면 새 창으로 열리게 해줘.\n- [선택 칸]: 고르면 위 글의 [단어]가 바뀌게 해줘.\n내용은 아래와 같아: (상자에 들어갈 글과 링크 주소를 여기에 적기)\n휴대폰에서도 보기 좋게, 글자는 크게 해줘.',
     p4:'방금 만든 대시보드의 숫자를 원본 파일과 다시 대조해줘. 내 지역({지역})의 건수, 인구, 1만 명당 계산이 맞는지 확인하고, 틀리거나 확인할 수 없는 숫자를 알려줘. 인용할 때 적어야 할 출처와 기준 연도도 정리해줘.'
   },
   rank:{
@@ -545,7 +608,7 @@ var CONFIG={
     {q:'이 숫자만으로 "우리 동네는 위험하다"고 말할 수 있다.',a:'x',
      why:'숫자에는 방문객이나 지역 특성처럼 담기지 않는 것이 있어요. 숫자는 이야기의 출발점이에요.'}
   ],
-  keys:['눌러서 복사','파일 먼저 읽기','내 지역 계산','대시보드','숫자 점검']
+  keys:['파일 먼저 읽기','내 지역 계산','대시보드','숫자 점검','눌렀을 때 일어나는 일']
 };
 
 (function(){
@@ -648,7 +711,7 @@ $('oxNext').onclick=function(){
 };
 oxRender();
 
-/* 14장 */
+/* 17장 */
 (function(){
   var row=$('takeRow'),cl=['acc','wht','pale','acc','wht'];
   CONFIG.keys.forEach(function(k,i){
