@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="ko" data-theme="mint">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>같이 만들어 보는 우리 동네 범죄 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Instrument+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 테마: 맨 위 data-theme 값 또는 주소 끝 #lavender #mint #butter #peach #sky */
+:root,[data-theme="lavender"]{--bg:#F6F1E8;--accent:#DACFF3;--accent2:#BFAEEB;--accent3:#EEE8FA;--outer:#DCD5EA;--ink:#161616}
+[data-theme="mint"]  {--bg:#F4F2EA;--accent:#CDEBDD;--accent2:#93CFB4;--accent3:#E6F4EE;--outer:#D2E5DB;--ink:#161616}
+[data-theme="butter"]{--bg:#F7F0DE;--accent:#EBD69B;--accent2:#D6B65C;--accent3:#F5EBCB;--outer:#E2D6B6;--ink:#2F3A64}
+[data-theme="peach"] {--bg:#F8F2EC;--accent:#F5D2C3;--accent2:#E9A88E;--accent3:#FBE9E1;--outer:#EBDAD0;--ink:#161616}
+[data-theme="sky"]   {--bg:#F3F4F0;--accent:#CFDFF5;--accent2:#98B8E6;--accent3:#E9F0FA;--outer:#D5DFEE;--ink:#1B2B4A}
+:root{--muted:#5F5A52;--faint:#A39E95;--text2:#3E3A45;--text3:#4A4458;--ph:#7F7A72;--dash:#C9C2B5;
+  --white:#FFFFFF;--good:#2E7A55;--goodbg:#E3F1E8;--bad:#C24F3A;--badbg:#F9E6E1}
+/* 따라가기 레이어가 쓰는 변수 */
+:root{--main:#2E7A55;--coral:#F2BBA9;--panel:var(--accent3);--deep:#1F5E42;--soft:#4F5A54;--top-h:56px;--bot-h:68px}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--outer);color:var(--ink);
+  font-family:"Noto Sans KR",system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased;word-break:keep-all}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.sf{font-family:"Instrument Serif",Georgia,serif}
+.sfi{font-family:"Instrument Serif",Georgia,serif;font-style:italic}
+
+/* 바깥 위 줄 (따라가기 버튼이 들어가는 자리) */
+.top{position:fixed;left:0;right:0;top:0;height:var(--top-h);z-index:50;display:flex;align-items:center;gap:10px;
+  padding:0 max(16px,env(safe-area-inset-left,0px))}
+.brand{flex:1;min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand i{font-family:"Instrument Serif",serif;font-size:19px;margin-right:6px}
+.doneinfo{font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tbtn{cursor:pointer;font-weight:700;font-size:14px;background:var(--white);border:1.6px solid var(--ink);border-radius:999px;padding:4px 14px;color:var(--ink)}
+.tbtn:hover{background:var(--accent3)}
+
+/* 고정 무대 */
+#deck{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;overflow:hidden;
+  background:var(--bg);border-radius:16px;box-shadow:0 22px 56px rgba(30,60,45,.16)}
+.progress{position:absolute;left:0;top:0;height:4px;background:var(--accent2);z-index:5;transition:width .4s ease}
+.slide{position:absolute;inset:0;padding:44px 72px 40px;display:flex;flex-direction:column}
+.slide.active{animation:fin .35s ease}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.slide.active{animation:none}.progress{transition:none}}
+.sh{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:500;color:var(--muted)}
+.sh .ses{display:flex;align-items:baseline;gap:8px}
+.sh .ses i{font-family:"Instrument Serif",serif;font-style:italic;font-size:20px;color:var(--ink)}
+.sh .fx{background:var(--accent);color:var(--ink);border-radius:999px;padding:1px 10px;font-weight:700;font-size:12px}
+.h{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:46px;line-height:1.16;margin-top:14px}
+.h.c,.lead.c{text-align:center}
+.w{font-family:"Black Han Sans",sans-serif;font-weight:400;background:linear-gradient(transparent 62%,var(--accent2) 62%)}
+.lead{font-size:18px;line-height:1.6;color:var(--muted);margin-top:8px}
+.content{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:22px;position:relative}
+.foot{font-size:13px;color:var(--muted);padding-top:10px;line-height:1.5}
+
+.bub{position:relative;border-radius:48px 56px 50px 58px / 52px 46px 58px 50px}
+.bub.acc{background:var(--accent)} .bub.wht{background:var(--white)} .bub.pale{background:var(--accent3)}
+.bub::after{content:"";position:absolute;background:inherit;display:none}
+.t-bl::after{display:block;left:64px;bottom:-30px;width:46px;height:40px;clip-path:polygon(0 0,100% 0,16% 100%)}
+.t-br::after{display:block;right:64px;bottom:-30px;width:46px;height:40px;clip-path:polygon(0 0,100% 0,84% 100%)}
+.t-bc::after{display:block;left:calc(50% - 22px);bottom:-30px;width:44px;height:40px;clip-path:polygon(0 0,100% 0,50% 100%)}
+.t-l::after{display:block;left:-28px;top:var(--ty,50%);margin-top:-22px;width:40px;height:44px;clip-path:polygon(100% 0,100% 100%,0 34%)}
+.t-r::after{display:block;right:-28px;top:var(--ty,50%);margin-top:-22px;width:40px;height:44px;clip-path:polygon(0 0,0 100%,100% 34%)}
+.t-t::after{display:block;left:calc(50% - 20px);top:-28px;width:40px;height:40px;clip-path:polygon(0 100%,100% 100%,50% 0)}
+.ch{display:block;color:var(--ink)} .deco{position:absolute;pointer-events:none;color:var(--ink)}
+.btn{font-family:inherit;cursor:pointer;border:none;border-radius:999px;font-size:16px;font-weight:700;padding:12px 22px;background:var(--ink);color:#fff;text-decoration:none;display:inline-block;line-height:1.3}
+.btn.ol{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.6px var(--ink)}
+.btn.sm{font-size:14px;padding:7px 14px}
+.btn:disabled{opacity:.3;cursor:default}
+.bar{background:var(--ink);color:#fff;border-radius:999px;padding:14px 26px;display:flex;gap:16px;align-items:center;font-size:17px;line-height:1.5}
+.bar .tg{background:var(--accent);color:var(--ink);border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700;flex:none}
+
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:2px;background:#fff;border-radius:999px;padding:5px;box-shadow:0 8px 24px rgba(30,60,45,.18)}
+.nav button{width:40px;height:40px;border:none;border-radius:50%;background:transparent;cursor:pointer;color:var(--ink);display:grid;place-items:center}
+.nav button:hover:not(:disabled){background:var(--accent3)} .nav button:disabled{opacity:.22;cursor:default}
+.nav .cnt{font-family:"Instrument Serif",serif;font-size:20px;padding:0 8px;min-width:72px;text-align:center}
+.nav .cnt span{color:var(--faint)}
+
+/* ---- 실습 덱 전용 ---- */
+.cover .wrapc{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:34px}
+.cover-bub{width:930px;padding:46px 70px 54px;text-align:center}
+.cover-bub .kick{font-size:24px}
+.cover-bub .h{font-size:58px;margin-top:6px}
+.cover-bub .lead{font-size:20px;margin-top:14px}
+.cover .ch{position:absolute;bottom:-30px;left:calc(50% - 100px)}
+.cover .cfoot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+
+.ag{display:grid;grid-template-columns:84px 1fr 330px;align-items:center;gap:0 20px;padding:17px 0;border-top:1.5px solid var(--ink)}
+.ag:last-child{border-bottom:1.5px solid var(--ink)}
+.ag .n{font-family:"Instrument Serif",serif;font-size:50px;line-height:1}
+.ag .t{font-family:"Black Han Sans",sans-serif;font-size:28px}
+.ag .o{font-size:17px;color:var(--text2)}
+
+.num{font-family:"Instrument Serif",serif;font-style:italic;font-size:44px;line-height:1}
+.bh{font-family:"Black Han Sans",sans-serif;font-size:26px;line-height:1.25;margin:8px 0 8px}
+.bp{font-size:18px;line-height:1.6;color:var(--text2)}
+.bp b{color:var(--ink)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;align-items:start}
+.row3 .bub{padding:38px 38px 42px;min-height:360px}
+.row3 .bub:nth-child(2){margin-top:26px}
+.row3 .bh{font-size:29px}.row3 .bp{font-size:19.5px}
+
+/* 눌러서 복사하는 상자 */
+.pbox{position:relative;display:block;width:100%;text-align:left;font-family:inherit;color:var(--ink);cursor:pointer;
+  background:var(--accent3);border:1.6px dashed var(--ph);border-radius:18px;padding:24px 26px 20px;font-size:18px;line-height:1.7;margin:16px 0 14px}
+.pbox::after{content:attr(data-hint);position:absolute;right:16px;top:-13px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 13px}
+.pbox:hover{background:var(--accent)}
+.pbox.done{background:var(--accent);border-style:solid;border-color:var(--ink)}
+.pbox mark{background:var(--accent2);color:var(--ink);padding:0 5px;border-radius:6px;font-weight:700}
+.pbox.sm{font-size:16.5px;line-height:1.55;padding:15px 20px 13px;margin:0}
+.aibtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.aibtns .btn{font-size:15px;padding:9px 18px}
+.bub .aitag{font-size:14px;font-weight:700;color:var(--muted);margin-top:14px}
+
+.pgrid{display:grid;grid-template-columns:430px 1fr;gap:58px;align-items:start}
+.pgrid .l{padding:34px 40px 40px}
+.pgrid .r{padding:30px 46px 34px}
+.pgrid ol{list-style:none;counter-reset:q;margin-top:6px}
+.pgrid ol li{counter-increment:q;display:flex;gap:14px;align-items:baseline;font-size:18px;line-height:1.5;padding:11px 0;border-top:1.5px solid var(--ink)}
+.pgrid ol li::before{content:counter(q);font-family:"Instrument Serif",serif;font-style:italic;font-size:28px;flex:none;width:24px}
+.pgrid .rl{font-family:"Black Han Sans",sans-serif;font-size:24px}
+.regrow{display:flex;gap:12px;align-items:center;margin:8px 0 4px;flex-wrap:wrap}
+.regrow select{font:inherit;font-size:20px;font-weight:700;border:1.6px solid var(--ink);border-radius:999px;padding:8px 22px;background:var(--white);color:var(--ink)}
+.regnow{font-size:15px;color:var(--muted);margin-top:10px}
+.regnow b{color:var(--ink)}
+
+.files{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.files .bub{padding:36px 44px 40px}
+.files .tag{display:inline-block;background:var(--ink);color:#fff;border-radius:999px;font-size:13px;font-weight:700;padding:2px 12px}
+.files .bh{font-size:29px}
+.files ul{list-style:none;margin-top:12px}
+.files li{font-size:17.5px;line-height:1.55;color:var(--text2);padding:9px 0;border-top:1.5px solid var(--ink)}
+.files li b{color:var(--ink)}
+.acts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.files .btn.sm,.acts .btn.sm{font-size:15px;padding:9px 18px}
+.kwr{margin:10px 0 6px}
+
+.cks{display:grid;gap:14px}
+.ck{display:flex;gap:18px;align-items:center;text-align:left;background:var(--white);border:1.6px solid var(--ink);border-radius:999px;padding:16px 28px;font-size:20px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--ink)}
+.ck i{flex:none;width:30px;height:30px;border-radius:50%;border:1.6px solid var(--ink);background:var(--white);display:grid;place-items:center}
+.ck[aria-checked="true"]{background:var(--accent)}
+.ck[aria-checked="true"] i{background:var(--ink)}
+.ck[aria-checked="true"] i::after{content:"";width:13px;height:7px;border-left:2.6px solid #fff;border-bottom:2.6px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.split2{display:grid;grid-template-columns:1fr 400px;gap:60px;align-items:start}
+.side{padding:34px 40px;font-size:19.5px;line-height:1.65}
+.side b{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:24px;display:block;margin-bottom:6px}
+
+.choices{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 18px}
+.choices button{font:inherit;font-size:20px;font-weight:700;border:1.6px solid var(--ink);background:var(--white);border-radius:999px;padding:14px 28px;cursor:pointer}
+.choices button:hover{background:var(--accent)}
+.choices button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.reply{font-size:20px;line-height:1.7;min-height:90px}
+.qbig{font-family:"Black Han Sans",sans-serif;font-size:34px;line-height:1.4}
+
+.trow{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:center;padding:22px 0 16px;border-top:1.5px solid var(--ink)}
+.trow:last-child{border-bottom:1.5px solid var(--ink)}
+.trow .s{font-family:"Black Han Sans",sans-serif;font-size:24px;line-height:1.3}
+.trow .s small{display:block;font-family:"Noto Sans KR",sans-serif;font-size:15px;color:var(--muted);margin-top:2px}
+.chipg{display:grid;grid-template-columns:1fr 1fr;gap:22px 26px}
+.chipg .pbox{height:100%}
+.row3 .pbox.sm{margin-top:22px}
+
+.oxwrap{display:flex;gap:40px;align-items:flex-start}
+.oxb{width:790px;padding:32px 52px 38px;min-height:420px}
+.oxb .qn{font-family:"Instrument Serif",serif;font-style:italic;font-size:22px;color:var(--muted)}
+.oxb .qt{font-family:"Black Han Sans",sans-serif;font-size:32px;line-height:1.4;margin:6px 0 18px}
+.oxbtns{display:flex;gap:16px}
+.oxbtns button{width:84px;height:84px;border-radius:50%;border:1.6px solid var(--ink);background:var(--white);font-family:"Black Han Sans",sans-serif;font-size:38px;cursor:pointer}
+.oxbtns button:hover:not(:disabled){background:var(--accent)}
+.oxbtns button.pick{background:var(--ink);color:#fff}
+.oxres{margin-top:18px;min-height:96px;font-size:19.5px;line-height:1.6}
+.oxres .vd{display:inline-block;border-radius:999px;font-weight:700;font-size:14px;padding:2px 14px;margin-bottom:6px}
+.oxres .vd.g{background:var(--goodbg);color:var(--good)} .oxres .vd.b{background:var(--badbg);color:var(--bad)}
+.oxside .ch{margin-top:46px}
+
+.take{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;align-items:start}
+.take .bub{padding:40px 18px 44px;text-align:center}
+.take .bub:nth-child(even){margin-top:24px}
+.take .num{font-size:40px}
+.take .bh{font-size:25px;margin:8px 0 0}
+.endrow{display:flex;gap:44px;align-items:flex-start;margin-top:44px}
+.endrow .bub{flex:1;padding:36px 54px 40px}
+.endrow .bh{font-size:32px}.endrow .bp{font-size:21px}
+.bar .code{color:#fff}
+
+/* 따라가기 레이어 손질 (그림자 없이 평평하게) */
+body .fl-panel{box-shadow:none;border:1.6px solid var(--ink);border-radius:20px}
+body .fl-btn{box-shadow:none;border-width:1.6px}
+body .fl-code button{box-shadow:none;border-width:1.6px}
+body .fl-code input,body .fl-panel input{border-width:1.6px}
+
+@media (max-width:899px){
+  :root{--top-h:50px;--bot-h:62px}
+  .brand,.doneinfo{display:none}.top{justify-content:flex-end}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="bust" fill="#fff" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28 262 C32 214 58 182 110 180 C162 182 188 214 192 262 Z"/><path d="M96 148 L95 182 M124 148 L125 182" fill="none"/>
+<path d="M90 184 C100 196 120 196 130 184" fill="none"/><path d="M147 94 C162 90 165 116 147 119"/><ellipse cx="110" cy="104" rx="40" ry="46"/>
+<path d="M71 100 C62 62 90 44 114 49 C142 44 160 66 151 98" fill="none"/>
+<path d="M77 76 C87 62 97 66 103 55 M99 62 C109 49 123 57 131 48 M119 61 C131 55 145 63 149 56 M81 90 C91 79 99 81 105 70" fill="none" stroke-width="2.6"/>
+<circle cx="94" cy="108" r="13"/><circle cx="126" cy="108" r="13"/><path d="M107 107 Q110 103 113 107 M139 105 L149 101 M81 105 L72 102" fill="none"/>
+<circle cx="95" cy="109" r="2.4" fill="currentColor" stroke="none"/><circle cx="125" cy="109" r="2.4" fill="currentColor" stroke="none"/>
+<path d="M111 116 C106 125 108 129 115 128 M101 138 C107 143 116 143 121 137" fill="none"/></g>
+<symbol id="ch-think" viewBox="0 0 220 262"><use href="#bust"/><g fill="#fff" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M150 262 C150 232 142 206 126 188" fill="none"/><path d="M176 262 C172 226 160 200 140 182" fill="none"/>
+<path d="M124 190 C112 188 108 172 116 164 C124 156 140 162 141 176 C142 186 134 192 124 190 Z"/><path d="M118 166 C114 158 113 152 117 146" fill="none"/></g></symbol>
+<symbol id="ch-read" viewBox="0 0 220 262"><use href="#bust"/><g fill="#fff" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M56 214 L110 199 L164 214 L164 262 L110 250 L56 262 Z"/><path d="M110 199 L110 250" fill="none"/>
+<path d="M68 226 L98 218 M68 238 L98 230 M122 218 L152 226 M122 230 L152 238" fill="none" stroke-width="2"/>
+<ellipse cx="54" cy="236" rx="10" ry="14"/><ellipse cx="166" cy="236" rx="10" ry="14"/></g></symbol>
+<symbol id="ch-laptop" viewBox="0 0 220 262"><use href="#bust"/><g fill="#fff" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M42 204 L178 204 L172 262 L48 262 Z"/><circle cx="110" cy="232" r="7" fill="none"/></g></symbol>
+<symbol id="d-marks" viewBox="0 0 44 40"><path d="M14 36 C6 26 7 13 16 4 M30 36 C22 26 23 13 32 4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+<symbol id="d-dash" viewBox="0 0 50 30"><path d="M6 24 L30 6 M22 26 L44 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+<symbol id="d-spiral" viewBox="0 0 70 44"><path d="M4 36 C10 10 38 4 38 22 C38 34 22 34 24 22 C26 10 48 8 66 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<div class="top" role="navigation" aria-label="슬라이드 조작">
+  <span class="brand">런&amp;런 · 같이 만드는 대시보드</span>
+  <span class="doneinfo" id="doneinfo"></span>
+</div>
+
+<div id="deck">
+<div class="progress" id="prog"></div>
+
+<!-- 01 표지 -->
+<section class="slide cover" id="s01" data-label="표지" hidden>
+  <div class="sh"><span>런&amp;런 동아리 · 같이 만들어 보는 실습</span><span class="ses"><i>Hands-on</i>표지</span></div>
+  <div class="wrapc">
+    <div class="bub acc t-bc cover-bub">
+      <p class="sfi kick">Follow along</p>
+      <h1 class="h">같이 만들어 보는 <span class="w">우리 동네</span> 범죄 대시보드</h1>
+      <p class="lead">누르면 복사되고, 누르면 열려요. 따라가며 내 AI에 붙여 넣어요</p>
+    </div>
+    <svg class="ch" viewBox="0 0 220 262" style="width:200px;height:238px"><use href="#ch-laptop"/></svg>
+    <svg class="deco" viewBox="0 0 44 40" style="left:60px;top:70px;width:44px;height:40px"><use href="#d-marks"/></svg>
+    <svg class="deco" viewBox="0 0 70 44" style="right:40px;top:300px;width:70px;height:44px"><use href="#d-spiral"/></svg>
+    <div class="cfoot"><span>대상: 런&amp;런 동아리 멤버</span><span>Claude, ChatGPT, Gemini 어디서든 따라 할 수 있어요</span></div>
+  </div>
+</section>
+
+<!-- 02 순서 -->
+<section class="slide" id="s02" data-label="오늘의 순서" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>전체 여정</span></div>
+  <h2 class="h">오늘은 <span class="w">이 순서</span>로 만들어요</h2>
+  <div class="content" style="margin-top:20px">
+    <div class="ag"><span class="n">01</span><span class="t">파일 받기</span><span class="o">공공데이터 파일 두 개</span></div>
+    <div class="ag"><span class="n">02</span><span class="t">AI에게 파일 읽게 하기</span><span class="o">프롬프트 ① 복사 → 붙여넣기</span></div>
+    <div class="ag"><span class="n">03</span><span class="t">내 지역, 인구 보정 계산</span><span class="o">프롬프트 ②</span></div>
+    <div class="ag"><span class="n">04</span><span class="t">대시보드 만들기</span><span class="o">프롬프트 ③</span></div>
+    <div class="ag"><span class="n">05</span><span class="t">고치고 숫자 점검하기</span><span class="o">고치기 모음, 프롬프트 ④</span></div>
+  </div>
+</section>
+
+<!-- 03 눌러서 따라가는 법 -->
+<section class="slide" id="s03" data-label="누르는 법" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>준비</span></div>
+  <h2 class="h">이 페이지는 <span class="w">눌러서</span> 따라가요</h2>
+  <div class="content">
+    <div class="row3">
+      <div class="bub acc t-bl"><div class="num">01</div><div class="bh">눌러서 복사</div><p class="bp">점선 상자를 눌러 보세요. 눌린 상자는 색이 바뀌고 복사돼요.</p>
+        <button type="button" class="pbox sm" data-text="복사 연습 성공! 여기까지 따라오셨어요." data-hint="눌러서 복사">복사 연습 상자 (눌러 보세요)</button></div>
+      <div class="bub wht t-bc"><div class="num">02</div><div class="bh">눌러서 열기</div><p class="bp">쓰는 AI 하나를 눌러 새 창으로 열어 두세요.</p>
+        <div class="aibtns"><a class="btn sm" data-link="claude" target="_blank" rel="noopener noreferrer">Claude ↗</a><a class="btn sm" data-link="chatgpt" target="_blank" rel="noopener noreferrer">ChatGPT ↗</a><a class="btn sm" data-link="gemini" target="_blank" rel="noopener noreferrer">Gemini ↗</a></div></div>
+      <div class="bub pale t-br"><div class="num">03</div><div class="bh">붙여넣기</div><p class="bp">AI 입력창을 누르고 <b>Ctrl+V</b> (맥은 <b>Cmd+V</b>)로 붙여 넣어요. 폰에서는 입력창을 길게 눌러요.</p></div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">준비물</span><span>AI 창 하나, 그리고 다음 장에서 받을 파일 두 개예요.</span></div>
+  </div>
+</section>
+
+<!-- 04 파일 받기 -->
+<section class="slide" id="s04" data-label="파일 받기" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>활동 1</span></div>
+  <h2 class="h">먼저 <span class="w">파일 두 개</span> 받아요</h2>
+  <div class="content">
+    <div class="files">
+      <div class="bub acc t-bl">
+        <span class="tag">경찰청</span>
+        <div class="bh">① 범죄 통계 (CSV)</div>
+        <div class="kwr"><button type="button" class="pbox sm" data-text="경찰청 범죄 발생 지역별 통계" data-hint="눌러서 복사">경찰청 범죄 발생 지역별 통계</button></div>
+        <ul><li>누른 뒤, 공공데이터포털 검색창에 붙여 넣어요.</li><li><b>지역별</b>이 들어간 파일만 써요. <b>장소별</b>은 못 써요.</li></ul>
+        <div class="acts"><a class="btn sm" data-link="portal" target="_blank" rel="noopener noreferrer">공공데이터포털 열기 ↗</a></div>
+      </div>
+      <div class="bub wht t-br" style="margin-top:20px">
+        <span class="tag">통계청</span>
+        <div class="bh">② 인구 (엑셀)</div>
+        <div class="kwr"><button type="button" class="pbox sm" data-text="도시지역 인구현황" data-hint="눌러서 복사">도시지역 인구현황</button></div>
+        <ul><li>국가통계포털(KOSIS)에서 최근 연도, <b>경기도 시군 모두</b>로 골라 엑셀로 받아요.</li><li><b>세대수</b> 표는 못 써요. 단위가 <b>명</b>이어야 해요.</li></ul>
+        <div class="acts"><a class="btn sm" data-link="kosis" target="_blank" rel="noopener noreferrer">국가통계포털 열기 ↗</a></div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">막히면</span><span>위쪽 <b>자료</b> 버튼에 강사가 올려 둔 파일을 받아 써도 돼요.</span></div>
+  </div>
+</section>
+
+<!-- 05 프롬프트 1 -->
+<section class="slide" id="s05" data-label="프롬프트 1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>프롬프트 ①</span></div>
+  <h2 class="h">파일부터 <span class="w">읽게</span> 해요</h2>
+  <div class="content">
+    <div class="pgrid">
+      <div class="bub acc t-r l" style="--ty:40%">
+        <ol>
+          <li>오른쪽 상자를 눌러 복사해요.</li>
+          <li>쓰는 AI 창을 열어요.</li>
+          <li>입력창에 붙여 넣고, 받은 파일 두 개를 첨부해요.</li>
+          <li>보내고, 답을 기다려요.</li>
+        </ol>
+        <div class="aitag">AI 열기</div>
+        <div class="aibtns"><a class="btn sm" data-link="claude" target="_blank" rel="noopener noreferrer">Claude ↗</a><a class="btn sm" data-link="chatgpt" target="_blank" rel="noopener noreferrer">ChatGPT ↗</a><a class="btn sm" data-link="gemini" target="_blank" rel="noopener noreferrer">Gemini ↗</a></div>
+      </div>
+      <div class="bub wht t-l r" style="--ty:40%">
+        <div class="rl">프롬프트 ①</div>
+        <button type="button" class="pbox" data-key="p1" data-hint="눌러서 복사"></button>
+        <p class="bp">첨부 버튼은 입력창 옆의 클립이나 + 모양이에요. 아직 분석이나 화면 제작은 시키지 않아요.</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">Tip</span><span>파일을 첨부하지 않고 보내면 AI가 추측해서 답해요. 꼭 두 개를 같이 올려요.</span></div>
+  </div>
+</section>
+
+<!-- 06 확인 (유연) -->
+<section class="slide" id="s06" data-label="답 확인하기" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>확인</span></div>
+  <h2 class="h">이렇게 답하면 <span class="w">맞아요</span></h2>
+  <div class="content">
+    <div class="split2">
+      <div class="cks" id="cks">
+        <button type="button" class="ck" role="checkbox" aria-checked="false"><i></i>경기도 시군이 31개로 나왔어요</button>
+        <button type="button" class="ck" role="checkbox" aria-checked="false"><i></i>범죄 대분류와 중분류가 보여요</button>
+        <button type="button" class="ck" role="checkbox" aria-checked="false"><i></i>인구 단위가 &lsquo;명&rsquo;이에요</button>
+        <button type="button" class="ck" role="checkbox" aria-checked="false"><i></i>못 쓰는 파일이라는 말이 없어요</button>
+      </div>
+      <div class="bub pale t-l side" style="--ty:30%"><b id="ckCnt">확인 0 / 4</b>하나라도 안 맞으면 파일을 다시 받거나, 10장의 대처 문장을 써요.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 프롬프트 2 -->
+<section class="slide" id="s07" data-label="프롬프트 2" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>프롬프트 ②</span></div>
+  <h2 class="h">내 지역과 <span class="w">인구 보정</span></h2>
+  <div class="content">
+    <div class="pgrid">
+      <div class="bub acc t-r l" style="--ty:40%">
+        <div class="rl">내 지역 고르기</div>
+        <div class="regrow"><select id="regSel" aria-label="내 지역"></select></div>
+        <ol>
+          <li>지역을 고르면 상자 안이 바뀌어요.</li>
+          <li>상자를 눌러 복사해요.</li>
+          <li>같은 대화창에 붙여 넣고 보내요.</li>
+        </ol>
+      </div>
+      <div class="bub wht t-l r" style="--ty:40%">
+        <div class="rl">프롬프트 ②</div>
+        <button type="button" class="pbox" data-key="p2" data-hint="눌러서 복사"></button>
+        <p class="bp">같은 대화창에서 이어 가야 AI가 첨부한 파일을 기억해요.</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">핵심</span><span>건수만 보면 큰 도시가 위에 있어요. 그래서 인구 1만 명당으로 바꿔서 비교해요.</span></div>
+  </div>
+</section>
+
+<!-- 08 순위 비교 (유연) -->
+<section class="slide" id="s08" data-label="순위 비교" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>생각해 보기</span></div>
+  <h2 class="h">건수 순위와 1만 명당 순위, <span class="w">달랐나요</span></h2>
+  <div class="content">
+    <div class="oxwrap">
+      <div class="bub wht t-r oxb" style="--ty:46%">
+        <div class="qn">My result</div>
+        <div class="qbig">내 지역의 두 순위는 어땠나요?</div>
+        <div class="choices" id="rankChoices" style="margin-top:18px">
+          <button type="button" data-k="same" aria-pressed="false">같았어요</button>
+          <button type="button" data-k="diff" aria-pressed="false">달랐어요</button>
+          <button type="button" data-k="none" aria-pressed="false">아직 못 봤어요</button>
+        </div>
+        <div class="reply" id="rankReply" aria-live="polite">내 화면에 나온 결과를 보고 골라 보세요.</div>
+      </div>
+      <div class="oxside"><svg class="ch" viewBox="0 0 220 262" style="width:200px;height:238px"><use href="#ch-think"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 프롬프트 3 -->
+<section class="slide" id="s09" data-label="프롬프트 3" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>프롬프트 ③</span></div>
+  <h2 class="h"><span class="w">대시보드</span> 만들기</h2>
+  <div class="content">
+    <div class="pgrid">
+      <div class="bub acc t-r l" style="--ty:40%">
+        <div class="rl">꼭 들어갈 것 4가지</div>
+        <ol>
+          <li>내 지역의 건수와 순위</li>
+          <li>1만 명당 건수와 순위</li>
+          <li>시군 비교 그래프에서 내 지역 강조</li>
+          <li>출처와 기준 연도</li>
+        </ol>
+        <p class="regnow">내 지역: <b class="regname"></b> · 7장에서 바꿀 수 있어요</p>
+      </div>
+      <div class="bub wht t-l r" style="--ty:40%">
+        <div class="rl">프롬프트 ③</div>
+        <button type="button" class="pbox" data-key="p3" data-hint="눌러서 복사"></button>
+        <p class="bp">디자인은 각자 알아서예요. 마음에 안 들면 11장의 고치기 문장으로 바꿔요.</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">규칙</span><span>화면이 만들어지면 숫자부터 확인해요. 예쁜 것보다 맞는 게 먼저예요.</span></div>
+  </div>
+</section>
+
+<!-- 10 안 나올 때 (유연) -->
+<section class="slide" id="s10" data-label="막혔을 때" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>막혔을 때</span></div>
+  <h2 class="h">막히면 <span class="w">이 문장</span>을 눌러요</h2>
+  <div class="content" style="margin-top:14px">
+    <div class="trow"><div class="s">화면이 안 보여요<small>AI마다 미리보기 방식이 달라요</small></div><button type="button" class="pbox sm" data-text="HTML 파일로 만들어줘. 미리보기가 안 되면 내가 파일로 받아서 브라우저에서 열 수 있게 해줘." data-hint="눌러서 복사">HTML 파일로 만들어줘. 미리보기가 안 되면 내가 파일로 받아서 브라우저에서 열 수 있게 해줘.</button></div>
+    <div class="trow"><div class="s">글자가 깨져요<small>한글 CSV에서 자주 생겨요</small></div><button type="button" class="pbox sm" data-text="첨부한 CSV 파일의 글자 인코딩을 CP949(EUC-KR)로 다시 읽어줘." data-hint="눌러서 복사">첨부한 CSV 파일의 글자 인코딩을 CP949(EUC-KR)로 다시 읽어줘.</button></div>
+    <div class="trow"><div class="s">시군 수가 이상해요<small>경기도는 31개 시군이에요</small></div><button type="button" class="pbox sm" data-text="파일에서 경기도 시군 목록을 있는 그대로 나열해줘. 빠진 시군이 있으면 알려줘." data-hint="눌러서 복사">파일에서 경기도 시군 목록을 있는 그대로 나열해줘. 빠진 시군이 있으면 알려줘.</button></div>
+    <div class="trow"><div class="s">숫자가 이상해요<small>계산 과정을 보여 달라고 해요</small></div><button type="button" class="pbox sm" data-text="내 지역의 건수와 인구가 원본 파일의 어느 줄, 어느 칸에서 왔는지 보여주고, 1만 명당 계산식을 풀어서 설명해줘." data-hint="눌러서 복사">내 지역의 건수와 인구가 원본 파일의 어느 줄, 어느 칸에서 왔는지 보여주고, 1만 명당 계산식을 풀어서 설명해줘.</button></div>
+  </div>
+</section>
+
+<!-- 11 고치기 -->
+<section class="slide" id="s11" data-label="고치기 모음" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>고치기</span></div>
+  <h2 class="h">마음에 드는 것만 <span class="w">눌러서</span> 고쳐요</h2>
+  <div class="content" style="margin-top:18px">
+    <div class="chipg">
+      <button type="button" class="pbox sm" data-text="범죄 유형별 구성비를 내 지역과 경기도 전체로 비교하는 그래프를 추가해줘." data-hint="눌러서 복사">범죄 유형별 구성비를 내 지역과 경기도 전체로 비교하는 그래프를 추가해줘.</button>
+      <button type="button" class="pbox sm" data-text="죄종을 검색해서 볼 수 있는 표를 추가해줘." data-hint="눌러서 복사">죄종을 검색해서 볼 수 있는 표를 추가해줘.</button>
+      <button type="button" class="pbox sm" data-text="건수 순위와 인구 1만 명당 순위를 버튼으로 바꿔 볼 수 있게 해줘." data-hint="눌러서 복사">건수 순위와 인구 1만 명당 순위를 버튼으로 바꿔 볼 수 있게 해줘.</button>
+      <button type="button" class="pbox sm" data-text="다른 시군으로 바꿔 볼 수 있는 선택 상자를 추가해줘." data-hint="눌러서 복사">다른 시군으로 바꿔 볼 수 있는 선택 상자를 추가해줘.</button>
+      <button type="button" class="pbox sm" data-text="글자를 더 크게 하고, 색은 [원하는 색] 계열로 바꿔줘." data-hint="눌러서 복사">글자를 더 크게 하고, 색은 [원하는 색] 계열로 바꿔줘.</button>
+      <button type="button" class="pbox sm" data-text="휴대폰 화면에서도 보기 좋게 고쳐줘." data-hint="눌러서 복사">휴대폰 화면에서도 보기 좋게 고쳐줘.</button>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">Tip</span><span>한 번에 하나씩 고쳐요. 여러 개를 한꺼번에 시키면 숫자가 틀어질 때가 있어요.</span></div>
+  </div>
+</section>
+
+<!-- 12 프롬프트 4 -->
+<section class="slide" id="s12" data-label="프롬프트 4" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>프롬프트 ④</span></div>
+  <h2 class="h">숫자가 맞는지 <span class="w">점검</span>해요</h2>
+  <div class="content">
+    <div class="pgrid">
+      <div class="bub acc t-r l" style="--ty:40%">
+        <ol>
+          <li>상자를 눌러 복사해요.</li>
+          <li>같은 대화창에 붙여 넣고 보내요.</li>
+          <li>틀린 숫자가 있다고 하면 고쳐 달라고 해요.</li>
+        </ol>
+        <p class="regnow">내 지역: <b class="regname"></b> · 7장에서 바꿀 수 있어요</p>
+      </div>
+      <div class="bub wht t-l r" style="--ty:40%">
+        <div class="rl">프롬프트 ④</div>
+        <button type="button" class="pbox" data-key="p4" data-hint="눌러서 복사"></button>
+        <p class="bp">AI가 정리해 준 출처와 기준 연도는 화면 맨 아래에 꼭 적어 둬요.</p>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="bar"><span class="tg">규칙</span><span>발표나 블로그에 쓸 때는 출처와 기준 연도를 같이 적어요.</span></div>
+  </div>
+</section>
+
+<!-- 13 OX (유연) -->
+<section class="slide" id="s13" data-label="숫자 읽기 OX" data-flex="1" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><span class="fx">유연 슬라이드</span><i>Hands-on</i>생각해 보기</span></div>
+  <h2 class="h">숫자를 <span class="w">어떻게 읽을까요</span></h2>
+  <div class="content">
+    <div class="oxwrap">
+      <div class="bub wht t-r oxb" style="--ty:46%">
+        <div class="qn" id="oxN">Question 1</div>
+        <div class="qt" id="oxQ"></div>
+        <div class="oxbtns"><button type="button" id="oxO" aria-label="맞아요">O</button><button type="button" id="oxX" aria-label="아니에요">X</button></div>
+        <div class="oxres" id="oxR" aria-live="polite"></div>
+        <button type="button" class="btn sm" id="oxNext" hidden>다음 문항</button>
+      </div>
+      <div class="oxside"><svg class="ch" viewBox="0 0 220 262" style="width:200px;height:238px"><use href="#ch-read"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 마무리 -->
+<section class="slide" id="s14" data-label="마무리" hidden>
+  <div class="sh"><span>런&amp;런 · 같이 만드는 대시보드</span><span class="ses"><i>Hands-on</i>Key takeaways</span></div>
+  <h2 class="h">오늘 <span class="w">가져갈 것</span></h2>
+  <div class="content">
+    <div class="take" id="takeRow"></div>
+    <div class="endrow">
+      <div class="bub acc t-r" style="--ty:50%"><div class="bh">다음 모임까지</div><p class="bp">내 수업에 쓸 프롬프트를 <b>한 세트</b> 만들어 와요. 파일 읽기, 계산, 화면, 점검 네 개면 충분해요.</p>
+        <div class="acts"><button type="button" class="btn ol" id="toFirst">처음으로</button></div></div>
+      <svg class="ch" viewBox="0 0 220 262" style="width:190px;height:226px"><use href="#ch-think"/></svg>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="nav" role="navigation" aria-label="쪽 이동">
+  <button type="button" id="prev" aria-label="이전"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <span class="cnt" id="cnt">01 <span>/ 14</span></span>
+  <button type="button" id="next" aria-label="다음"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+
+<script>
+/* 문구와 설정은 여기에서 고쳐요. {지역}은 7장에서 고른 시군으로 바뀌어요. */
+var CONFIG={
+  links:{
+    portal:'https://www.data.go.kr',
+    kosis:'https://kosis.kr',
+    claude:'https://claude.ai',
+    chatgpt:'https://chatgpt.com',
+    gemini:'https://gemini.google.com'
+  },
+  region:'김포시',
+  sigun:['수원시','성남시','의정부시','안양시','부천시','광명시','평택시','동두천시','안산시','고양시','과천시','구리시','남양주시','오산시','시흥시','군포시','의왕시','하남시','용인시','파주시','이천시','안성시','김포시','화성시','광주시','양주시','포천시','여주시','연천군','가평군','양평군'],
+  prompts:{
+    p1:'첨부한 두 파일은 공공데이터야. 하나는 경찰청 범죄 발생 지역별 통계(CSV), 다른 하나는 시군별 인구(엑셀)야. 아직 분석이나 화면 제작은 하지 말고, 각 파일의 구조만 알려줘. 어떤 열이 지역인지, 범죄 종류는 몇 개인지, 경기도 시군은 몇 개인지, 인구 단위는 무엇인지, 못 쓸 부분이 있는지 말해줘.',
+    p2:'내가 비교하고 싶은 지역: {지역}. 경기도 시군별 총 범죄 건수와 인구 1만 명당 건수를 표로 보여줘. 내 지역의 건수 순위와 1만 명당 순위를 알려주고, 두 순위가 다르면 이유를 한 줄로 설명해줘.',
+    p3:'방금 계산한 결과로 HTML 대시보드를 만들어줘. 꼭 들어갈 것: 내 지역({지역})의 건수와 순위, 1만 명당 건수와 순위, 시군 비교 막대그래프에서 내 지역 강조, 맨 아래 출처와 기준 연도. 디자인은 알아서 정하고, 숫자는 파일에 있는 값만 써줘.',
+    p4:'방금 만든 대시보드의 숫자를 원본 파일과 다시 대조해줘. 내 지역({지역})의 건수, 인구, 1만 명당 계산이 맞는지 확인하고, 틀리거나 확인할 수 없는 숫자를 알려줘. 인용할 때 적어야 할 출처와 기준 연도도 정리해줘.'
+  },
+  rank:{
+    same:'건수와 인구의 균형이 비슷하다는 뜻이에요. 다른 시군 하나를 골라 두 순위를 비교해 봐요.',
+    diff:'인구가 많거나 적어서 생긴 차이일 수 있어요. AI가 이유를 한 줄로 설명했는지 확인해 봐요.',
+    none:'7장 프롬프트가 잘 갔는지, 파일 두 개가 같은 대화창에 있는지 확인해 봐요.'
+  },
+  ox:[
+    {q:'건수가 가장 많은 시군은, 인구 1만 명당으로 바꿔도 반드시 1위다.',a:'x',
+     why:'인구가 많은 시군은 건수도 많아 보여요. 인구로 나누면 순위가 바뀔 수 있어요.'},
+    {q:'방문객이 많은 곳은 인구 1만 명당 건수가 높게 나올 수 있다.',a:'o',
+     why:'인구에는 그곳에 사는 사람만 들어가요. 방문객이 많으면 건수는 늘지만 인구는 그대로라서 높게 나와요.'},
+    {q:'이 숫자만으로 "우리 동네는 위험하다"고 말할 수 있다.',a:'x',
+     why:'숫자에는 방문객이나 지역 특성처럼 담기지 않는 것이 있어요. 숫자는 이야기의 출발점이에요.'}
+  ],
+  keys:['눌러서 복사','파일 먼저 읽기','내 지역 계산','대시보드','숫자 점검']
+};
+
+(function(){
+var THEMES=['lavender','mint','butter','peach','sky'];
+var h=(location.hash||'').replace('#','');if(THEMES.indexOf(h)>=0)document.documentElement.setAttribute('data-theme',h);
+})();
+
+(function(){
+var deck=document.getElementById('deck'),S=1;
+function $(id){return document.getElementById(id);}
+function cssPx(name,fb){var v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));return isNaN(v)?fb:v;}
+function fit(){
+  var w=document.documentElement.clientWidth,hh=document.documentElement.clientHeight;
+  var topH=cssPx('--top-h',56),botH=cssPx('--bot-h',68),availH=hh-topH-botH;
+  S=Math.min(w/1280,availH/720);
+  deck.style.top=(topH+availH/2)+'px';
+  deck.style.transform='translate(-50%,-50%) scale('+S+')';
+}
+window.addEventListener('resize',fit);window.addEventListener('load',fit);fit();
+
+/* 링크 */
+[].forEach.call(document.querySelectorAll('[data-link]'),function(a){a.href=CONFIG.links[a.getAttribute('data-link')];});
+
+/* 복사 */
+function copyText(t,done){
+  function ok(){if(done)done(true);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fallback();});}
+  else fallback();
+  function fallback(){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();var r=false;try{r=document.execCommand('copy');}catch(e){}a.remove();if(done)done(r);}
+}
+function promptText(key){return CONFIG.prompts[key].replace(/\{지역\}/g,CONFIG.region);}
+function renderPrompts(){
+  [].forEach.call(document.querySelectorAll('.pbox[data-key]'),function(b){
+    var parts=CONFIG.prompts[b.getAttribute('data-key')].split('{지역}');
+    b.textContent='';
+    parts.forEach(function(p,i){
+      b.appendChild(document.createTextNode(p));
+      if(i<parts.length-1){var m=document.createElement('mark');m.textContent=CONFIG.region;b.appendChild(m);}
+    });
+  });
+  [].forEach.call(document.querySelectorAll('.regname'),function(e){e.textContent=CONFIG.region;});
+}
+[].forEach.call(document.querySelectorAll('.pbox'),function(b){
+  b.addEventListener('click',function(){
+    var key=b.getAttribute('data-key');
+    var text=key?promptText(key):(b.getAttribute('data-text')||b.textContent);
+    copyText(text,function(ok){
+      b.classList.add('done');b.setAttribute('data-hint',ok?'복사됨':'복사 안 됨. 직접 선택해 주세요');
+      clearTimeout(b._t);b._t=setTimeout(function(){b.setAttribute('data-hint','눌러서 복사');},1800);
+    });
+  });
+});
+
+/* 내 지역 */
+(function(){
+  var sel=$('regSel');
+  CONFIG.sigun.forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+  sel.value=CONFIG.region;
+  sel.addEventListener('change',function(){CONFIG.region=sel.value;renderPrompts();});
+  renderPrompts();
+})();
+
+/* 6장 체크 */
+(function(){
+  var cks=[].slice.call(document.querySelectorAll('#cks .ck'));
+  function upd(){var n=cks.filter(function(c){return c.getAttribute('aria-checked')==='true';}).length;$('ckCnt').textContent='확인 '+n+' / '+cks.length;}
+  cks.forEach(function(c){c.addEventListener('click',function(){c.setAttribute('aria-checked',c.getAttribute('aria-checked')==='true'?'false':'true');upd();});});
+})();
+
+/* 8장 순위 */
+(function(){
+  var btns=[].slice.call(document.querySelectorAll('#rankChoices button'));
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+    $('rankReply').textContent=CONFIG.rank[b.getAttribute('data-k')];
+  });});
+})();
+
+/* 13장 OX */
+var oi=0,answered=false,right=0,finished=false;
+function oxRender(){
+  var o=CONFIG.ox[oi];$('oxN').textContent='Question '+(oi+1)+' / '+CONFIG.ox.length;$('oxQ').textContent=o.q;
+  $('oxR').textContent='';$('oxNext').hidden=true;answered=false;
+  ['oxO','oxX'].forEach(function(id){var b=$(id);b.disabled=false;b.classList.remove('pick');});
+}
+function oxPick(v){
+  if(answered)return;answered=true;var o=CONFIG.ox[oi];var ok=v===o.a;if(ok)right++;
+  $(v==='o'?'oxO':'oxX').classList.add('pick');$('oxO').disabled=true;$('oxX').disabled=true;
+  var r=$('oxR');r.textContent='';var vd=document.createElement('span');vd.className='vd '+(ok?'g':'b');vd.textContent=ok?'맞아요':'다시 볼까요';
+  r.appendChild(vd);r.appendChild(document.createElement('br'));r.appendChild(document.createTextNode(o.why));
+  var nx=$('oxNext');nx.hidden=false;nx.textContent=oi<CONFIG.ox.length-1?'다음 문항':'정리 보기';
+}
+$('oxO').onclick=function(){oxPick('o');};$('oxX').onclick=function(){oxPick('x');};
+$('oxNext').onclick=function(){
+  if(finished){oi=0;right=0;finished=false;oxRender();return;}
+  if(oi<CONFIG.ox.length-1){oi++;oxRender();return;}
+  finished=true;$('oxN').textContent='Result';$('oxQ').textContent=CONFIG.ox.length+'문항 중 '+right+'개를 맞혔어요';
+  $('oxR').textContent='숫자는 비교 방법에 따라 이야기가 달라져요.';
+  $('oxO').disabled=true;$('oxX').disabled=true;this.textContent='다시 풀기';
+};
+oxRender();
+
+/* 14장 */
+(function(){
+  var row=$('takeRow'),cl=['acc','wht','pale','acc','wht'];
+  CONFIG.keys.forEach(function(k,i){
+    var d=document.createElement('div');d.className='bub '+cl[i%cl.length];
+    var n=document.createElement('div');n.className='num';n.textContent='0'+(i+1);
+    var b=document.createElement('div');b.className='bh';b.textContent=k;
+    d.appendChild(n);d.appendChild(b);row.appendChild(d);
+  });
+})();
+
+/* 넘기기 */
+var slides=[].slice.call(deck.querySelectorAll('.slide')),cur=0,N=slides.length;
+function pad(n){return(n<10?'0':'')+n;}
+function show(i){
+  slides.forEach(function(s,k){var on=k===i;s.hidden=!on;s.classList.toggle('active',on);});
+  $('cnt').innerHTML=pad(i+1)+' <span>/ '+N+'</span>';
+  $('prog').style.width=((i+1)/N*100)+'%';
+  $('prev').disabled=(i===0);$('next').disabled=(i===N-1);
+  $('doneinfo').textContent=slides[i].getAttribute('data-flex')?'유연 슬라이드 · 건너뛰어도 돼요':'';
+}
+function go(i){i=Math.max(0,Math.min(N-1,i));if(i===cur)return;cur=i;show(cur);}
+$('prev').onclick=function(){go(cur-1);};$('next').onclick=function(){go(cur+1);};
+$('toFirst').onclick=function(){go(0);};
+document.addEventListener('keydown',function(e){
+  var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!(t&&t.tagName==='BUTTON'))){go(cur+1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){go(cur-1);e.preventDefault();}
+});
+var sx=null;
+document.addEventListener('touchstart',function(e){if(e.target.closest('input,button,a,select')){sx=null;return;}sx=e.changedTouches[0].clientX;},{passive:true});
+document.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)go(dx<0?cur+1:cur-1);},{passive:true});
+show(0);
+window.__follow={go:function(i){go(i);},count:N,slides:slides};
+})();
+</script>
+<script src="../js/config.js"></script>
+<script src="../js/sync.js"></script>
+<script src="../js/follow-layer.js"></script>
+</body>
+</html>
